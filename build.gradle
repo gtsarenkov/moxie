@@ -1,0 +1,21 @@
+// Define a custom configuration for scanned JARs
+configurations {
+    localJars
+}
+
+dependencies {
+    // Use fileTree to dynamically add JARs from 'build' directories
+    localJars fileTree(dir: '.', include: '**/build/libs/*.jar')
+}
+
+// Example task to verify added dependencies
+task printLocalJars {
+    group = "verification"
+    description = "Prints all JARs added to the localJars configuration."
+
+    doLast {
+        configurations.localJars.each { jar ->
+            println "Local JAR Dependency: ${jar}"
+        }
+    }
+}

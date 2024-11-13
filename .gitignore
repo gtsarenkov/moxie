@@ -1,3 +1,4 @@
 /build.properties
 /*.sh
 /*.ps1
+/.gradle
