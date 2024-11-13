@@ -95,6 +95,9 @@ public class ClassUtil {
 
 	private static final int CONSTANT_NameAndType = 12;
 
+	private static final int CONSTANT_MethodHandle = 15;
+	private static final int CONSTANT_Dynamic = 17;
+	private static final int CONSTANT_InvokeDynamic = 18;
 	/** no ctor necessary */
 	private ClassUtil() {
 	}
@@ -189,7 +192,8 @@ public class ClassUtil {
 		// UTF and CLASS entries
 		//
 		for (int i = 1; i < pool_count; ++i) {
-			switch (is.readUnsignedByte()) {
+			int i1 = is.readUnsignedByte();
+			switch (i1) {
 
 			case CONSTANT_Utf8:
 				cp[i] = is.readUTF();
@@ -234,8 +238,17 @@ public class ClassUtil {
 				is.readUnsignedShort();
 				is.readUnsignedShort();
 				break;
-			default:
+			case CONSTANT_MethodHandle:
+				is.readUnsignedByte();
+				is.readUnsignedShort();
 				break;
+			case CONSTANT_Dynamic:
+			case CONSTANT_InvokeDynamic:
+				is.readUnsignedShort();
+				is.readUnsignedShort();
+				break;
+			default:
+				throw new IllegalStateException("UNKNOWN CONSTANT TYPE " + i1);
 			}
 		}
 

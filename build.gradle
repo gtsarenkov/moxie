@@ -1,3 +1,15 @@
+plugins {
+    id 'java'
+}
+
+
+// Moxie only compatible with JDK 8.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
 // Define a custom configuration for scanned JARs
 configurations {
     localJars
@@ -5,7 +17,7 @@ configurations {
 
 dependencies {
     // Use fileTree to dynamically add JARs from 'build' directories
-    localJars fileTree(dir: '.', include: '**/build/libs/*.jar')
+    localJars fileTree(dir: '.', include: '**/build/target/*.jar')
 }
 
 // Example task to verify added dependencies
@@ -18,4 +30,15 @@ task printLocalJars {
             println "Local JAR Dependency: ${jar}"
         }
     }
+}
+
+//ant.lifecycleLogLevel = "INFO"
+ant.lifecycleLogLevel = "VERBOSE"
+ant.failOnError = true
+ant.importBuild('build.xml') { antTargetName ->
+    'a-' + antTargetName.replace(":",  "-")
+}
+
+clean {
+  delete fileTree(dir: '.', include: '**/build/target/*.jar')
 }
