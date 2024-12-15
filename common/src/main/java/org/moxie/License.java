@@ -15,6 +15,7 @@
  */
 package org.moxie;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.moxie.utils.StringUtils;
@@ -24,6 +25,7 @@ import org.moxie.utils.StringUtils;
  */
 public class License implements Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	public final String name;
@@ -31,7 +33,7 @@ public class License implements Serializable {
 	public String distribution;
 	public String comments;
 
-	License(String name, String url) {
+	public License(String name, String url) {
 		this.name = convert(name);
 		this.url = url;
 	}

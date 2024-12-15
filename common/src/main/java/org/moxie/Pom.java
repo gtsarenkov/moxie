@@ -257,7 +257,7 @@ public class Pom implements Comparable<Pom>, Serializable {
 		}
 	}
 
-	String getManagedVersion(Dependency dep) {
+	public String getManagedVersion(Dependency dep) {
 		if (managedVersions.containsKey(dep.getManagementId())) {
 			return managedVersions.get(dep.getManagementId());
 		}
@@ -351,7 +351,7 @@ public class Pom implements Comparable<Pom>, Serializable {
 		issuesUrl = resolveProperties(issuesUrl);
 	}
 
-	String resolveProperties(String string) {
+	public String resolveProperties(String string) {
 		if (string == null) {
 			return null;
 		}
