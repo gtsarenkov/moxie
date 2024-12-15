@@ -1,5 +1,8 @@
+/build
+/.idea
 /build.properties
 /*.sh
 /*.ps1
 /.gradle
 *.log
+*.bak
