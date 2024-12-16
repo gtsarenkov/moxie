@@ -4,6 +4,7 @@
 /target
 /tmp
 /build
+/build-gradled
 /bin
 /moxie
 /keystore
