@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":maxml")
+    testImplementation "junit:junit:4.12"
+}
+
+test {
+    ignoreFailures true
+}

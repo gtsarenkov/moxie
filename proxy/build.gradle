@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url 'https://maven.restlet.talend.com/'
+    }
+}
+
+dependencies {
+    implementation "org.restlet.jse:org.restlet.ext.ssl:${property('restlet.version')}"
+    implementation "org.restlet.jse:org.restlet.ext.atom:${property('restlet.version')}"
+    implementation "org.restlet.jse:org.restlet.ext.freemarker:${property('restlet.version')}"
+    implementation "org.restlet.jse:org.restlet.ext.jetty:${property('restlet.version')}"
+
+    implementation "org.bouncycastle:bcprov-jdk18on:${property('bouncycastle.version')}"
+    implementation "org.bouncycastle:bcmail-jdk18on:${property('bouncycastle.version')}"
+    implementation "org.bouncycastle:bcpkix-jdk18on:${property('bouncycastle.version')}"
+
+    implementation('org.apache.lucene:lucene-core:3.6.1')
+    implementation('commons-httpclient:commons-httpclient:3.1')
+    implementation('com.beust:jcommander:1.17')
+
+    implementation(project(':common'))
+    implementation(project(':maxml'))
+
+    testImplementation('junit:junit:4.12')
+}
+
+test {
+    ignoreFailures = true
+}

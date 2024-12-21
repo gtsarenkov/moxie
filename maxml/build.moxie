@@ -8,4 +8,3 @@ sourceDirectories:
 - test 'src/test/java'
 dependencies:
 - test 'testng'
-- build 'cobertura'

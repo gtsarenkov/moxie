@@ -51,7 +51,7 @@ tasks: {
     "mx:javac": {
         source: 1.8
         target: 1.8
-        compiler: javac1.8
+        compiler: javac10+
         encoding: UTF-8
         compilerArgs: '-Xlint:-options'
     }

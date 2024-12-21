@@ -2,6 +2,32 @@ plugins {
     id 'java'
 }
 
+repositories {
+    maven {
+        url "http://172.16.0.104:8085/repository/maven-public/"
+        allowInsecureProtocol = true
+    }
+}
+
+ext['restlet.version'] = "2.1.2"
+ext['bouncycastle.version'] = "1.78.1"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+subprojects { subproject ->
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    subproject.ext['restlet.version'] = rootProject.property('restlet.version')
+    subproject.ext['bouncycastle.version'] = rootProject.property('bouncycastle.version')
+
+    subproject.layout.buildDirectory.set(file("build-gradled"))
+}
 
 // Moxie only compatible with JDK 8.
 java {
@@ -10,18 +36,28 @@ java {
     }
 }
 
+
+
 // Define a custom configuration for scanned JARs
 configurations {
     localJars
+    moxieClasspath
 }
 
 dependencies {
     // Use fileTree to dynamically add JARs from 'build' directories
     localJars fileTree(dir: '.', include: '**/build/target/*.jar')
+    moxieClasspath('net.sourceforge.cobertura:cobertura:2.1.1')
+    moxieClasspath project(path: ":toolkit", configuration: "everything")
+    subprojects { sp ->
+        sp.pluginManager.withPlugin("java") {
+            moxieClasspath sp
+        }
+    }
 }
 
 // Example task to verify added dependencies
-task printLocalJars {
+tasks.register("printLocalJars") {
     group = "verification"
     description = "Prints all JARs added to the localJars configuration."
 
@@ -36,9 +72,23 @@ task printLocalJars {
 ant.lifecycleLogLevel = "VERBOSE"
 ant.failOnError = true
 ant.importBuild('build.xml') { antTargetName ->
-    'a-' + antTargetName.replace(":",  "-")
+    'a-' + antTargetName.replace(":", "-")
 }
 
 clean {
-  delete fileTree(dir: '.', include: '**/build/target/*.jar')
+    delete fileTree(dir: '.', include: '**/build/target/*.jar')
+}
+
+tasks.register("moxie", JavaExec) {
+    mainClass = "org.moxie.ant.Main"
+    classpath configurations.moxieClasspath
+    jvmArgs "--add-opens", "java.base/jdk.internal.loader=ALL-UNNAMED"
+    jvmArgs "-Dmx.verbose=true", "-Dmx.debug=true"
+    args "-verbose", "-debug"
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(21)) // Match the desired version
+    })
+    doFirst {
+        configurations.moxieClasspath.files.each { project.logger.lifecycle "${it}" }
+    }
 }

@@ -1,0 +1,92 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url 'https://repo.spring.io/libs-milestone'
+    }
+}
+
+configurations {
+    everything
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/core/java']
+        }
+        resources {
+            srcDir 'src/core/resources'
+            srcDir 'src/core/config'
+        }
+    }
+    everything {
+        java {
+            srcDirs = ['src/all/java']
+        }
+        resources {
+            srcDir 'src/all/resources'
+            srcDir 'src/all/config'
+        }
+        compileClasspath += main.output
+    }
+}
+
+dependencies {
+    implementation(localGroovy())
+    implementation('org.apache.ant:ant:1.10.15')
+
+    implementation(project(':common'))
+    implementation(project(':maxml'))
+
+    everythingImplementation('org.codehaus.groovy:groovy-all:1.8.8')
+    everythingImplementation('org.apache.ant:ant:1.10.15')
+    everythingImplementation('org.eclipse.jgit:org.eclipse.jgit:3.1.0.201310021548-r')
+    everythingImplementation('org.freemarker:freemarker:2.3.19')
+    everythingImplementation('commons-net:commons-net:1.4.0')
+    everythingImplementation('org.fusesource.wikitext:wikitext-core:1.4')
+    everythingImplementation('org.fusesource.wikitext:twiki-core:1.4')
+    everythingImplementation('org.fusesource.wikitext:textile-core:1.4')
+    everythingImplementation('org.fusesource.wikitext:tracwiki-core:1.4')
+    everythingImplementation('org.fusesource.wikitext:mediawiki-core:1.4')
+    everythingImplementation('org.fusesource.wikitext:confluence-core:1.4')
+    everythingImplementation('net.sourceforge.cobertura:cobertura:2.1.1')
+    everythingImplementation('emma:emma:2.1.5320')
+    everythingImplementation('emma:emma_ant:2.1.5320')
+    everythingImplementation('org.jacoco:org.jacoco.ant:0.8.12:nodeps')
+    everythingImplementation('org.testng:testng:6.8')
+    everythingImplementation('com.asual.lesscss:lesscss-engine:1.3.3')
+    everythingImplementation('org.pegdown:pegdown:1.4.1')
+
+    everythingImplementation(project(':common'))
+    everythingImplementation(project(':maxml'))
+
+    testImplementation('junit:junit:4.12')
+}
+
+processResources {
+    from ("src/core/config") {
+        into ("org/moxie")
+    }
+}
+
+processEverythingResources {
+    from ("src/core/config") {
+        into ("org/moxie")
+    }
+}
+
+
+tasks.register("everythingJar", Jar) {
+    archiveBaseName = "toolkit-all"
+    from(sourceSets.everything.output)
+}
+
+artifacts {
+    everything(tasks.named("everythingJar").get())
+    configurations.everythingRuntimeClasspath.incoming.files.each { everything(it) }
+}

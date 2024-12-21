@@ -803,12 +803,15 @@ public class Solver {
 			try {
 				Pom pom = null;
 				try {
-					pom = PomReader.readPom(moxieCache, pomFile);
+					Set<Dependency> importBOMs = new LinkedHashSet<>();
+					pom = PomReader.readPom(moxieCache, pomFile, PomReader.Requirements.LOOSE, importBOMs);
 					if (pom.hasParentDependency()) {
 						// we already have the parent POM locally 
 						Dependency parent = pom.getParentDependency();
 						parent.ring = dependency.ring;
 						retrievePOM(parent, retrieved);
+
+
 					}
 				} catch (MissingParentPomException e) {
 					// traverse up the graph and retrieve parent POM
