@@ -18,15 +18,12 @@ package org.moxie.ant;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.tools.ant.AntClassLoader;
 import org.apache.tools.ant.Task;
@@ -117,6 +114,7 @@ public abstract class MxTask extends Task {
 	/**
 	 * Console offset is a one-time correction factor
 	 * to improve readability of the output.
+	 *
 	 * @return
 	 */
 	public int getConsoleOffset() {
@@ -184,7 +182,7 @@ public abstract class MxTask extends Task {
 		if (isVerbose()) {
 			int indent = 30;
 			if (split) {
-				String [] paths = value.split(File.pathSeparator);
+				String[] paths = value.split(File.pathSeparator);
 				getConsole().key(StringUtils.leftPad(key, indent, ' '), paths[0]);
 				for (int i = 1; i < paths.length; i++) {
 					getConsole().key(StringUtils.leftPad("", indent, ' '), paths[i]);
@@ -200,7 +198,7 @@ public abstract class MxTask extends Task {
 		try {
 			InputStream is = getClass().getResourceAsStream("/" + resource);
 
-			byte [] buffer = new byte[32767];
+			byte[] buffer = new byte[32767];
 			int len = 0;
 			while ((len = is.read(buffer)) > -1) {
 				os.write(buffer, 0, len);
@@ -211,12 +209,12 @@ public abstract class MxTask extends Task {
 		return os.toString();
 	}
 
-	protected byte [] readResourceAsBytes(String resource) {
+	protected byte[] readResourceAsBytes(String resource) {
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
 			InputStream is = getClass().getResourceAsStream("/" + resource);
 
-			byte [] buffer = new byte[32767];
+			byte[] buffer = new byte[32767];
 			int len = 0;
 			while ((len = is.read(buffer)) > -1) {
 				os.write(buffer, 0, len);
@@ -236,7 +234,7 @@ public abstract class MxTask extends Task {
 		if (targetFile.exists() && !overwrite) {
 			return false;
 		}
-		byte [] content = readResourceAsBytes(resource);
+		byte[] content = readResourceAsBytes(resource);
 		targetFile.getParentFile().mkdirs();
 		FileUtils.writeContent(targetFile, content);
 		return true;
@@ -275,12 +273,12 @@ public abstract class MxTask extends Task {
 
 	public void sharePaths(String... paths) {
 		getProject().setProperty("mxshared.path", StringUtils.flattenStrings(
-				Arrays.asList(paths), File.pathSeparator));
+			Arrays.asList(paths), File.pathSeparator));
 	}
 
 	public Path getSharedPaths() {
 		Path path = new Path(getProject());
-		String paths  = getProject().getProperty("mxshared.path");
+		String paths = getProject().getProperty("mxshared.path");
 		if (!StringUtils.isEmpty(paths)) {
 			for (String fp : paths.split(File.pathSeparator)) {
 				FileSet fs = new FileSet();
@@ -308,7 +306,7 @@ public abstract class MxTask extends Task {
 		updateExecutionClasspath(build, downloaded);
 	}
 
-    public static void updateExecutionClasspath(Build build, Collection<Dependency> dependencies) {
+	public static void updateExecutionClasspath(Build build, Collection<Dependency> dependencies) {
 		Set<String> cp = new LinkedHashSet<String>();
 		for (Dependency dep : dependencies) {
 			File file = build.getSolver().getArtifact(dep);
@@ -341,19 +339,45 @@ public abstract class MxTask extends Task {
 			Class<?> sysclass = URLClassLoader.class;
 			Method addURL = null;
 			try {
-				addURL = sysclass.getDeclaredMethod("addURL", new Class[] { URL.class });
+				addURL = sysclass.getDeclaredMethod("addURL", new Class[]{URL.class});
 				addURL.setAccessible(true);
 			} catch (Throwable t) {
 				throw new MoxieException("Error, could not access class loader!", t);
 			}
 			for (String path : cp) {
 				try {
-					addURL.invoke(sysloader, new Object[] { new File(path).toURI().toURL() });
+					addURL.invoke(sysloader, new Object[]{new File(path).toURI().toURL()});
 					build.getConsole().debug(1, "{0}", path);
 				} catch (Throwable t) {
 					throw new MoxieException(MessageFormat.format(
 						"Error, could not add {0} to classloader", path), t);
 				}
+			}
+		} else if (loader.getClass().getPackageName().equals("jdk.internal.loader")) {
+			// running Moxie bundled with Ant or with -lib parameter
+			build.getConsole().debug("updating Moxie classpath via Java 9+ {0}", loader.getClass().getName());
+
+			Field ucpField = null; // URLClassPath field
+			try {
+				ucpField = loader.getClass().getSuperclass().getDeclaredField("ucp");
+				ucpField.setAccessible(true);
+				Object ucp = ucpField.get(loader);
+				Method addURLMethod = ucp.getClass().getDeclaredMethod("addURL", URL.class);
+				addURLMethod.setAccessible(true);
+				for (String path : cp) {
+					try {
+						File jarFile = new File(path);
+						URL jarUrl = jarFile.toURI().toURL();
+						addURLMethod.invoke(ucp, jarUrl);
+						build.getConsole().debug(1, "{0}", path);
+					} catch (Throwable t) {
+						throw new MoxieException(MessageFormat.format(
+							"Error, could not add {0} to classloader", path), t);
+					}
+				}
+			} catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException e) {
+				throw new MoxieException(MessageFormat.format(
+					"Error, could not get {0} from classloader", "ucp"), e);
 			}
 		} else {
 			build.getConsole().error("Skipping update classpath. Unexpected class loader {0}", loader.getClass().getName());
