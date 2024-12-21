@@ -40,11 +40,12 @@ public class Cobertura {
 		task.setTaskName("instr");
 		task.setProject(mxtest.getProject());
 		task.init();
-		
+
 		task.addFileset(fileSet);
 		task.setDataFile(mxtest.getCoberturaData().getAbsolutePath());
 		task.setToDir(mxtest.getInstrumentedBuild());
-		task.execute();
+		// TODO: cobertura is dead and does not support modern Java
+//		task.execute();
 	}
 	
 	public static void report(MxTest mxtest) {
@@ -64,7 +65,7 @@ public class Cobertura {
 		Path path = new Path(mxtest.getProject());
 		path.setRefid(new Reference(mxtest.getProject(), Key.compileSourcePath.referenceId()));
 		task.addPath(path);
-		
-		task.execute();
+		// TODO: cobertura is dead and does not support modern Java
+//		task.execute();
 	}
 }
