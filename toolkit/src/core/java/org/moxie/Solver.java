@@ -828,6 +828,9 @@ public class Solver {
 				// traverse down the graph and retrieve all dependent POMs
 				for (Scope scope : pom.getScopes()) {
 					for (Dependency dep : pom.getDependencies(scope, dependency.ring + 1)) {
+						if (dependency.groupId.equals(dep.groupId) && dep.version.equals("${asm.version}")) {
+							dep.version = unresolvedVersion;
+						}
 						retrievePOM(dep, retrieved);
 					}
 				}

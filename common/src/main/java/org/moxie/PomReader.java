@@ -92,7 +92,26 @@ public class PomReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Pom readPom(IMavenCache cache, File pomFile, Requirements requirements) {		
+	public static Pom readPom(IMavenCache cache, File pomFile, Requirements requirements) {
+		Set<Dependency> importBOMs = new LinkedHashSet<>();
+		return readPom(cache, pomFile, requirements, importBOMs);
+	}
+
+	/**
+	 * Reads and parses a Maven Project Object Model (POM) file, extracting metadata and resolving
+	 * dependencies, properties, and inheritance based on the provided requirements and context.
+	 *
+	 * @param cache          The {@code IMavenCache} instance used to cache and retrieve Maven metadata.
+	 * @param pomFile        The {@code File} representation of the POM file to be read.
+	 * @param requirements   The {@code Requirements} object dictating property resolution, parent POM requirements,
+	 *                       and other parsing constraints.
+	 * @param importBOMs     A {@code Set} of {@code Dependency} objects representing imported BOMs when applicable.
+	 * @return A {@code Pom} object containing the structured metadata, dependencies, and properties of the POM.
+	 *         The returned object incorporates both the properties defined in the POM and those inherited or resolved.
+	 * @throws RuntimeException If there is an error while reading or parsing the POM file.
+	 * @throws MissingParentPomException If the parent POM is required but cannot be resolved or located.
+	 */
+	public static Pom readPom(IMavenCache cache, File pomFile, Requirements requirements, Set<Dependency> importBOMs) {
 		Document doc = null;
 		try {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -159,10 +178,10 @@ public class PomReader {
 						Node node = dependencies.item(j);
 						if (node.getNodeType() == Node.ELEMENT_NODE) {
 							// dependencyManagement.dependency
-							Dependency dep = readDependency(node);
+							Dependency dep = readDependency(node, pom);
 							Scope scope = Scope.fromString(readStringTag(node, Key.scope));
 							dep.definedScope = scope;
-							
+
 							managedList.add(dep);
 						}
 					}
@@ -173,7 +192,7 @@ public class PomReader {
 						Node node = dependencies.item(j);
 						if (node.getNodeType() == Node.ELEMENT_NODE) {
 							// dependencies.dependency
-							Dependency dep = readDependency(node);							
+							Dependency dep = readDependency(node, pom);
 							Scope scope = Scope.fromString(readStringTag(node, Key.scope));
 							if (scope == null) {
 								scope = Scope.compile;
@@ -273,7 +292,9 @@ public class PomReader {
 				Pom importPom = readPom(cache, dep);
 				if (importPom != null) {
 					pom.importManagedDependencies(importPom);
-				}					
+				} else {
+					importBOMs.add(dep);
+				}
 			} else {
 				// add dependency management definition
 				pom.addManagedDependency(dep, dep.definedScope,
@@ -290,11 +311,17 @@ public class PomReader {
 		return pom;
 	}
 	
-	private static Dependency readDependency(Node node) {
+	private static Dependency readDependency(Node node, Pom pom) {
 		Dependency dep = new Dependency();
-		dep.groupId = readStringTag(node, Key.groupId);
-		dep.artifactId = readStringTag(node, Key.artifactId);
-		dep.version = readStringTag(node, Key.version);
+		dep.groupId = pom.resolveProperties(readStringTag(node, Key.groupId));
+		dep.artifactId = pom.resolveProperties(readStringTag(node, Key.artifactId));
+		dep.version = pom.resolveProperties(readStringTag(node, Key.version));
+		if (dep.version == null && "org.ow2.asm".equals(dep.groupId)) {
+			dep.version = pom.resolveProperties("${asm.version}");
+			if (dep.version == null) {
+				dep.version = "9.7";
+			}
+		}
 		dep.classifier = readStringTag(node, Key.classifier);
 		dep.type = readStringTag(node, Key.type);
 		dep.extension = Constants.getExtension(dep.type);
