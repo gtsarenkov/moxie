@@ -4,6 +4,13 @@ While upgrading and modernizing Gitblit, it is helpful to retain the ability to 
 
 Please note that this fork contains some hardcoded configurations that may not function with other projects.
 
+## How to run under Windows
+`JAVA_HOME` must be set to modern JDK
+````shell
+set JDK_JAVA_OPTIONS=""--add-opens=java.base/java.lang=ALL-UNNAMED"" ""--add-opens=java.base/java.net=ALL-UNNAMED"" ""--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED""
+gradlew moxie
+````
+
 ## Adopted technologies
 - JDK: GraalVM JDK 21
 - Gradle 8.x: for build
