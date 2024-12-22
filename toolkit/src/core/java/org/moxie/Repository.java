@@ -575,7 +575,7 @@ public class Repository {
 		// try to get the server-specified last-modified date of this artifact
 		lastModified = conn.getHeaderFieldDate("Last-Modified", lastModified);
 
-		solver.getConsole().debug(2, "trying " + url.toString());
+		solver.getConsole().debug(2, "trying {0}", url.toString());
 
 		InputStream in = new BufferedInputStream(conn.getInputStream());
 		byte[] buffer = new byte[32767];
