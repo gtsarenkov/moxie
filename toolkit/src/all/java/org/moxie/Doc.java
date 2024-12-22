@@ -147,7 +147,9 @@ public class Doc implements Serializable {
 			// menu
 			DocMenu menu = (DocMenu) element;
 			console.log(level, menu.name);
-			describe(console, level + 1, menu);
+			for (DocElement link : menu.elements) {
+				describe(console, level + 1, link);
+			}
 		} else if (element instanceof DocDivider) {
 			console.log(level, "--");
 		}
